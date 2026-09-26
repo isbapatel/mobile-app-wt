@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/skill_chip.dart';
 import '../widgets/input_field.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserDetailsScreen extends StatefulWidget {
   const UserDetailsScreen({super.key});
@@ -18,13 +20,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   final TextEditingController _leetcode = TextEditingController();
   final TextEditingController _github = TextEditingController();
 
-  // start empty
   List<String> currentSkills = [];
   List<String> aspiredSkills = [];
 
   String status = 'Student';
 
-  // categories multi-select (max 2)
   final List<String> availableCategories = [
     'SDE',
     'UI/UX designer',
@@ -33,50 +33,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   ];
   final List<String> selectedCategories = [];
 
-  // suggestions for skills (autocomplete)
   final List<String> skillSuggestions = [
-    'Python',
-    'Python development',
-    'Java',
-    'C++',
-    'C',
-    'HTML',
-    'CSS',
-    'JavaScript',
-    'Frontend',
-    'React',
-    'Node.js',
-    'Dart',
-    'Flutter',
-    'Kotlin',
-    'Swift',
-    'SQL',
-    'NoSQL',
-    'Machine Learning',
-    'Data Science',
-    'AWS',
-    'GCP',
-    'Azure',
-    'DevOps',
-    'Docker',
-    'Kubernetes',
-    'Android',
-    'iOS',
-    'UI Design',
-    'UX Research',
-    'Product Management',
-    'Testing',
-    'Automation',
-    'Selenium',
-    'Rust',
-    'Go',
-    'TypeScript'
+    'Python','Python development','Java','C++','C','HTML','CSS','JavaScript','Frontend',
+    'React','Node.js','Dart','Flutter','Kotlin','Swift','SQL','NoSQL','Machine Learning',
+    'Data Science','AWS','GCP','Azure','DevOps','Docker','Kubernetes','Android','iOS',
+    'UI Design','UX Research','Product Management','Testing','Automation','Selenium',
+    'Rust','Go','TypeScript'
   ];
 
   void addSkill(String skill, List<String> list) {
     final s = skill.trim();
     if (s.isEmpty) return;
-    if (list.length >= 50) return; // large cap
+    if (list.length >= 50) return;
     if (!list.contains(s)) {
       setState(() {
         list.add(s);
@@ -103,8 +71,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Select up to 2 categories',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Select up to 2 categories', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 ...availableCategories.map((c) {
                   final checked = temp.contains(c);
@@ -118,7 +85,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             temp.add(c);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Select up to 2 only')),
+                              const SnackBar(content: Text('Only 2 allowed')),
                             );
                           }
                         } else {
@@ -131,10 +98,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 const SizedBox(height: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                      backgroundColor: AppColors.primaryBlue,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   child: const Text('Done', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -145,7 +111,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 12),
               ],
             ),
           );
@@ -171,7 +136,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    // rebuild submit availability when linkedin changes
     _linkedin.addListener(() {
       setState(() {});
     });
@@ -192,9 +156,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Category selector
                   const Text('Category', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
+
                   GestureDetector(
                     onTap: _openCategoryPicker,
                     child: Container(
@@ -214,10 +178,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                     spacing: 8,
                                     runSpacing: 6,
                                     children: selectedCategories
-                                        .map((s) => Chip(
-                                              backgroundColor: AppColors.chipBg,
-                                              label: Text(s),
-                                            ))
+                                        .map((s) => Chip(backgroundColor: AppColors.chipBg, label: Text(s)))
                                         .toList(),
                                   ),
                           ),
@@ -228,8 +189,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   ),
 
                   const SizedBox(height: 18),
-
-                  // Status
                   const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
 
@@ -263,8 +222,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   ),
 
                   const SizedBox(height: 12),
-
-                  // College or Company field
                   InputField(
                     label: status == 'Student' ? 'College' : "Company's Name",
                     hint: status == 'Student' ? 'College' : "Company's Name",
@@ -272,22 +229,17 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   ),
 
                   const SizedBox(height: 18),
-
-                  // Skills and focus header
-                  const Text('Skills and Focus', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const Text('Skills & Focus', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 10),
 
-                  // Current skills
                   const Text('Current skills', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Wrap(
-                    children: currentSkills
-                        .map((s) => SkillChip(label: s, onRemove: () => removeSkill(s, currentSkills)))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 10),
+                      children: currentSkills
+                          .map((s) => SkillChip(label: s, onRemove: () => removeSkill(s, currentSkills)))
+                          .toList()),
 
-                  // Add current skill input + autocomplete + button
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -297,19 +249,25 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             if (query.isEmpty) return const Iterable<String>.empty();
                             return skillSuggestions.where((option) => option.toLowerCase().contains(query));
                           },
-                          displayStringForOption: (opt) => opt,
+                          onSelected: (String selection) {
+                            addSkill(selection, currentSkills);
+                            _skillInput.clear();
+                          },
                           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
                             controller.text = _skillInput.text;
                             controller.selection = _skillInput.selection;
-                            // sync back and forth
                             controller.addListener(() {
                               if (controller.text != _skillInput.text) _skillInput.text = controller.text;
                             });
                             return TextField(
                               controller: controller,
                               focusNode: focusNode,
+                              onSubmitted: (value) {
+                                addSkill(value, currentSkills);
+                                _skillInput.clear();
+                              },
                               decoration: InputDecoration(
-                                hintText: 'Type to add skills..',
+                                hintText: 'Add skill...',
                                 filled: true,
                                 fillColor: AppColors.cardBg,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -317,30 +275,16 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: const BorderSide(color: AppColors.inputBorder),
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: AppColors.primaryBlue),
-                                ),
                               ),
-                              onSubmitted: (value) {
-                                addSkill(value, currentSkills);
-                                _skillInput.clear();
-                              },
                             );
-                          },
-                          onSelected: (String selection) {
-                            addSkill(selection, currentSkills);
-                            _skillInput.clear();
                           },
                         ),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                        ),
+                            backgroundColor: AppColors.primaryBlue,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                         onPressed: () {
                           addSkill(_skillInput.text, currentSkills);
                           _skillInput.clear();
@@ -351,17 +295,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   ),
 
                   const SizedBox(height: 18),
-
-                  // Aspired skills
                   const Text('Aspired skills', style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Wrap(
-                    children: aspiredSkills
-                        .map((s) => SkillChip(label: s, onRemove: () => removeSkill(s, aspiredSkills)))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 10),
+                      children: aspiredSkills
+                          .map((s) => SkillChip(label: s, onRemove: () => removeSkill(s, aspiredSkills)))
+                          .toList()),
 
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -371,7 +312,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             if (query.isEmpty) return const Iterable<String>.empty();
                             return skillSuggestions.where((option) => option.toLowerCase().contains(query));
                           },
-                          displayStringForOption: (opt) => opt,
+                          onSelected: (String selection) {
+                            addSkill(selection, aspiredSkills);
+                            _aspiredSkillInput.clear();
+                          },
                           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
                             controller.text = _aspiredSkillInput.text;
                             controller.selection = _aspiredSkillInput.selection;
@@ -381,8 +325,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             return TextField(
                               controller: controller,
                               focusNode: focusNode,
+                              onSubmitted: (value) {
+                                addSkill(value, aspiredSkills);
+                                _aspiredSkillInput.clear();
+                              },
                               decoration: InputDecoration(
-                                hintText: 'Type to add skills..',
+                                hintText: 'Add skill...',
                                 filled: true,
                                 fillColor: AppColors.cardBg,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -390,30 +338,16 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: const BorderSide(color: AppColors.inputBorder),
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: AppColors.primaryBlue),
-                                ),
                               ),
-                              onSubmitted: (value) {
-                                addSkill(value, aspiredSkills);
-                                _aspiredSkillInput.clear();
-                              },
                             );
-                          },
-                          onSelected: (String selection) {
-                            addSkill(selection, aspiredSkills);
-                            _aspiredSkillInput.clear();
                           },
                         ),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                        ),
+                            backgroundColor: AppColors.primaryBlue,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                         onPressed: () {
                           addSkill(_aspiredSkillInput.text, aspiredSkills);
                           _aspiredSkillInput.clear();
@@ -424,50 +358,45 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   ),
 
                   const SizedBox(height: 18),
-
-                  // Profile links
                   const Text('Profile links', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 10),
 
                   InputField(label: 'LinkedIn *', hint: 'https://linkedin.com/in/username', controller: _linkedin),
                   const SizedBox(height: 12),
-
-                  InputField(label: 'Leetcode', hint: 'https://leetcode.com/username', controller: _leetcode),
+                  InputField(label: 'LeetCode', hint: 'https://leetcode.com/username', controller: _leetcode),
                   const SizedBox(height: 12),
-
-                  InputField(label: 'Github', hint: 'https://github.com/username', controller: _github),
+                  InputField(label: 'GitHub', hint: 'https://github.com/username', controller: _github),
                   const SizedBox(height: 20),
 
-                  // Submit button (disabled until LinkedIn is filled)
+                  // SUBMIT BUTTON
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _canSubmit
-                          ? () {
-                              Navigator.pushNamed(
-                                context,
-                                '/profile',
-                                arguments: {
-                                  'name': 'Nikhil Ahuja',
-                                  'email': 'nikhilahuja@gmail.com',
-                                  'phone': '+91 6396248468',
-                                  'category': selectedCategories.isNotEmpty ? selectedCategories.join(', ') : 'Not specified',
-                                  'status': status,
-                                  'company': _collegeOrCompany.text,
-                                  'currentSkills': currentSkills,
-                                  'aspiredSkills': aspiredSkills,
-                                  'linkedin': _linkedin.text,
-                                  'leetcode': _leetcode.text,
-                                  'github': _github.text,
-                                },
-                              );
+                          ? () async {
+                              final user = FirebaseAuth.instance.currentUser;
+                              if (user == null) return;
+
+                              await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
+                                "category": selectedCategories.join(', '),
+                                "status": status,
+                                "college": _collegeOrCompany.text.trim(),
+                                "currentSkills": currentSkills,
+                                "aspiredSkills": aspiredSkills,
+                                "linkedin": _linkedin.text.trim(),
+                                "leetcode": _leetcode.text.trim(),
+                                "github": _github.text.trim(),
+                              }, SetOptions(merge: true));
+
+                              Navigator.pushReplacementNamed(context, '/profile');
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _canSubmit ? AppColors.primaryBlue : AppColors.primaryBlue.withOpacity(0.45),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
+                          backgroundColor: _canSubmit
+                              ? AppColors.primaryBlue
+                              : AppColors.primaryBlue.withOpacity(0.45),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                       child: const Text('Submit', style: TextStyle(fontSize: 16, color: Colors.white)),
                     ),
                   ),

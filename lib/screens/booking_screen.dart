@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../theme/app_colors.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -14,12 +17,11 @@ class _BookingScreenState extends State<BookingScreen> {
   int? _selectedSlotIndex;
   final TextEditingController _phoneController = TextEditingController();
 
-  final List<String> _slots = const ['09:30 AM', '10:00 PM'];
+  final List<String> _slots = const ['09:30 PM', '10:00 PM'];
 
   @override
   void initState() {
     super.initState();
-    // Rebuild when phone text changes so _canBook updates and button enables
     _phoneController.addListener(() {
       setState(() {});
     });
@@ -47,7 +49,9 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   bool get _canBook =>
-      _selectedDate != null && _selectedSlotIndex != null && _phoneController.text.trim().isNotEmpty;
+      _selectedDate != null &&
+      _selectedSlotIndex != null &&
+      _phoneController.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +72,7 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Date field
+            // ---- Date picker ----
             const Text(
               'Select Date',
               style: TextStyle(fontWeight: FontWeight.w600),
@@ -85,13 +89,16 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined, size: 18, color: Colors.black87),
+                    const Icon(Icons.calendar_today_outlined,
+                        size: 18, color: Colors.black87),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         dateLabel,
                         style: TextStyle(
-                          color: _selectedDate == null ? AppColors.mutedText : Colors.black87,
+                          color: _selectedDate == null
+                              ? AppColors.mutedText
+                              : Colors.black87,
                         ),
                       ),
                     ),
@@ -101,6 +108,8 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
 
             const SizedBox(height: 24),
+
+            // ---- Slot selection ----
             const Text(
               'Select Time Slot',
               style: TextStyle(fontWeight: FontWeight.w600),
@@ -112,9 +121,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 return Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _selectedSlotIndex = index;
-                      });
+                      setState(() => _selectedSlotIndex = index);
                     },
                     child: Container(
                       margin: EdgeInsets.only(right: index == 0 ? 12 : 0),
@@ -123,7 +130,9 @@ class _BookingScreenState extends State<BookingScreen> {
                         color: isSelected ? AppColors.primaryBlue : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected ? AppColors.primaryBlue : AppColors.inputBorder,
+                          color: isSelected
+                              ? AppColors.primaryBlue
+                              : AppColors.inputBorder,
                         ),
                       ),
                       child: Center(
@@ -142,6 +151,8 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
 
             const SizedBox(height: 24),
+
+            // ---- Phone input ----
             const Text(
               'Contact number',
               style: TextStyle(fontWeight: FontWeight.w600),
@@ -154,7 +165,8 @@ class _BookingScreenState extends State<BookingScreen> {
                 hintText: 'Enter your contact number',
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: AppColors.inputBorder),
@@ -167,24 +179,40 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
 
             const Spacer(),
+
+            // ---- Book button ----
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _canBook
-                    ? () {
-                        // After booking, go directly to user details screen
-                        Navigator.pushReplacementNamed(context, '/userDetails', arguments: {
-                          'date': _selectedDate,
-                          'slot': _selectedSlotIndex != null ? _slots[_selectedSlotIndex!] : null,
-                          'phone': _phoneController.text.trim(),
-                        });
+                    ? () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .set({
+                            'phone': _phoneController.text.trim(),
+                            'lastBookingDate': _selectedDate,
+                            'slot': _slots[_selectedSlotIndex!],
+                          }, SetOptions(merge: true));
+                        }
+
+                        Navigator.pushReplacementNamed(context, '/userDetails',
+                            arguments: {
+                              'date': _selectedDate,
+                              'slot': _slots[_selectedSlotIndex!],
+                              'phone': _phoneController.text.trim(),
+                            });
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _canBook ? AppColors.primaryBlue : AppColors.primaryBlue.withOpacity(0.5),
+                  backgroundColor: _canBook
+                      ? AppColors.primaryBlue
+                      : AppColors.primaryBlue.withOpacity(0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text(
                   'Book a Slot',

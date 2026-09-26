@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'screens/user_details_screen.dart';
-import 'screens/profile_screen.dart';
+// screens
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/booking_screen.dart';
-import 'screens/booking_confirmation_screen.dart';
-import 'theme/app_colors.dart';
+import 'screens/user_details_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,27 +26,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'WT Winds',
-      theme: ThemeData(
-        primaryColor: AppColors.primaryBlue,
-        scaffoldBackgroundColor: AppColors.scaffoldBg,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primaryBlue,
-          elevation: 0,
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      theme: ThemeData(useMaterial3: true),
+
       initialRoute: '/',
+
       routes: {
         '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => LoginScreen(),
         '/welcome': (context) => const WelcomeScreen(),
-        '/booking': (context) => const BookingScreen(),
-        '/bookingConfirmation': (context) => const BookingConfirmationScreen(),
+        '/booking': (context) => BookingScreen(),
         '/userDetails': (context) => const UserDetailsScreen(),
         '/profile': (context) => const ProfileScreen(),
       },

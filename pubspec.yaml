@@ -9,18 +9,21 @@ dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^3.5.0
-  firebase_auth: ^5.3.4
+  firebase_core: ^3.4.1
+  firebase_auth: ^5.2.2
   google_sign_in: ^6.2.1
-  cloud_firestore: ^5.6.0
-  
-  cupertino_icons: ^1.0.8
+  cloud_firestore: ^5.4.4
   intl: ^0.19.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1     # <-- Add this
+
+flutter_launcher_icons:                # <-- Add this config
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
 
 flutter:
   uses-material-design: true
